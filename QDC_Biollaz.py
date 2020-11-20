@@ -141,51 +141,51 @@ ax.set(xlabel='Frequency (in %)')
 plt.show()
 
 
-#######
-####### ML AND STUFF (PROTOTYPE)
-#######
+######
+###### ML AND STUFF (PROTOTYPE)
+######
 
-# def encode_onehot(series: pd.Series, drop_last: bool = True
-#                   ) -> Union[pd.Series, pd.DataFrame]:
-#     values = series.unique()
-#     if drop_last:
-#         values = values[:-1]
-#     return pd.concat(((series == val).rename(val)
-#                       for val in values
-#                       ),
-#                      axis=1
-#                      ).squeeze()
-#
-#
-# print("\n ENCODING GENDER")
-# df_num['IS_FEMALE'] = encode_onehot(df_full_data['CD_GENDER'])
-#
-# print("\n NEW DATA")
-# print(df_num)
-# pd.set_option("display.max_rows", None)
-# print(df_num.dtypes)
-#
-# df_num = df_num.dropna()
-#
-# X = df_num.drop('IS_TARGET', axis=1)
-# y = df_num.IS_TARGET
-#
-# X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=1)
-#
-# clf = DecisionTreeClassifier(max_depth=5)
-#
-# clf.fit(X_train, y_train)
-#
-# y_pred = clf.predict(X_test)
-#
-# print("Accuracy:", metrics.accuracy_score(y_test, y_pred))
-#
-# dot_data = StringIO()
-# export_graphviz(clf, out_file=dot_data,
-#                 filled=True, rounded=True,
-#                 special_characters=True, feature_names=X.columns, class_names=['0', '1'])
-# graph = pydotplus.graph_from_dot_data(dot_data.getvalue())
-# graph.write_png('MILLENIUM.png')
-# Image(graph.create_png())
+def encode_onehot(series: pd.Series, drop_last: bool = True
+                  ) -> Union[pd.Series, pd.DataFrame]:
+    values = series.unique()
+    if drop_last:
+        values = values[:-1]
+    return pd.concat(((series == val).rename(val)
+                      for val in values
+                      ),
+                     axis=1
+                     ).squeeze()
+
+
+print("\n ENCODING GENDER")
+df_num['IS_FEMALE'] = encode_onehot(df_full_data['CD_GENDER'])
+
+print("\n NEW DATA")
+print(df_num)
+pd.set_option("display.max_rows", None)
+print(df_num.dtypes)
+
+df_num = df_num.dropna()
+
+X = df_num.drop('IS_TARGET', axis=1)
+y = df_num.IS_TARGET
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=1)
+
+clf = DecisionTreeClassifier(max_depth=5)
+
+clf.fit(X_train, y_train)
+
+y_pred = clf.predict(X_test)
+
+print("Accuracy:", metrics.accuracy_score(y_test, y_pred))
+
+dot_data = StringIO()
+export_graphviz(clf, out_file=dot_data,
+                filled=True, rounded=True,
+                special_characters=True, feature_names=X.columns, class_names=['0', '1'])
+graph = pydotplus.graph_from_dot_data(dot_data.getvalue())
+graph.write_png('MILLENIUM.png')
+Image(graph.create_png())
 
 
