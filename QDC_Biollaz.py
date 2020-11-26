@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+import seaborn as sns
 from typing import Union
 from sklearn.model_selection import train_test_split
 from sklearn import metrics
@@ -75,6 +76,10 @@ def summary_data(data: pd.DataFrame):
     print("\n NUMBER")
     print(data.filter(regex=r"^NR_", axis=1).describe().transpose())
 
+    # DESCRIPTION
+    print("\n DESCRIPTION")
+    print(data.filter(regex=r"^DS_", axis=1).describe().transpose())
+
     print("\n NAN summary")
     print(summarize_na(data))
 
@@ -92,14 +97,10 @@ def summarize_na(df: pd.DataFrame) -> pd.DataFrame:
 # print(summarize_na(df_full_data))
 summary_data(df_full_target)
 
-# remove the data with more than "NAN" than the threshold defined in function "summarize_na"
+# remove the data with more "NAN" than the threshold defined in function "summarize_na"
 df_full_data = df_full_data.drop(summarize_na(df_full_data).index, axis=1)
 
 # print(df_full_data)
-
-# split the data into numerical and categorical variables
-df_cat = df_full_data.select_dtypes(include="object").copy()
-df_num = df_full_data.select_dtypes(exclude="object").copy()
 
 
 ###
@@ -117,7 +118,6 @@ ax1 = tmp1.plot(kind='pie',
                 figsize=(5, 5)
                 )
 plt.show()
-
 
 # HISTOGRAM
 tmp2 = df_full_data['QT_AGE']
@@ -140,52 +140,86 @@ ax.grid(True, axis='x', color='lightgrey', linestyle='--')
 ax.set(xlabel='Frequency (in %)')
 plt.show()
 
+# DROP THE NAN LISTWISE
+df_full_data = df_full_data.dropna()
+print("number of entry: " + str(len(df_full_data.index)))
+
+# REPLACE OTHER NATIONALITY THAN PORTUGAL BY "OTHER"
+df_full_data.CD_NACIONALITY[df_full_data.CD_NACIONALITY != "PT"] = "OTHER"
+
+# REPLACE OTHER COUNTRY ADRESS THAN PORTUGAL BY "OTHER"
+df_full_data.CD_CLI_COUNTRY_ADDRESS[df_full_data.CD_CLI_COUNTRY_ADDRESS != "PT"] = "OTHER"
+
+# SPLIT EDUCATION INTO TWO CATEGORIES A-E ("STANDARD") and F-K (UNIVERSITY)
+df_full_data.CD_SCOLARITY = df_full_data.CD_SCOLARITY.replace(["A", "B", "C", "D", "E"], "STANDARD")
+df_full_data.CD_SCOLARITY = df_full_data.CD_SCOLARITY.replace(["F", "G", "H", "I", "J", "K"], "UNIVERSITY")
+
+# SPLIT CIVIL STATU A-B-C-G-M ("MARRIED") and D-J-S-T-V ("UNMARRIED")
+df_full_data.CD_CIVIL_STATUS = df_full_data.CD_CIVIL_STATUS.replace(["A", "B", "C", "G", "M"], "MARRIED")
+df_full_data.CD_CIVIL_STATUS = df_full_data.CD_CIVIL_STATUS.replace(["D", "J", "S", "T", "V"], "UNMARRIED")
+
+# DROP LIFE CYCLE, SIMILARITY WITH AGE AND CIVIL STATU
+df_full_data = df_full_data.drop(columns="DS_CLI_LIFE_CYCLE")
+
+# DROP CD_CLI_COUNCIL_ADDRESS, too specific, NOT USEFULL
+df_full_data = df_full_data.drop(columns="CD_CLI_COUNCIL_ADDRESS")
+
+# DROP CD_PROFESSION, redundant with CD_PROF_SITUATION
+df_full_data = df_full_data.drop(columns="CD_PROFESSION")
+
+# TEMPORARY DROP DS_CLI_SEGMENT, because unclear for now
+df_full_data = df_full_data.drop(columns="DS_CLI_SEGMENT")
+
+# split CD_CLI_DISTRICT_ADDRESS between district with high population density (more 100 people / km2) and rural district
+df_full_data.CD_CLI_DISTRICT_ADDRESS = df_full_data.CD_CLI_DISTRICT_ADDRESS.astype(str)
+df_full_data.CD_CLI_DISTRICT_ADDRESS = df_full_data.CD_CLI_DISTRICT_ADDRESS.replace([
+    "10000", "30000", "60000", "100000", "110000", "130000", "140000", "150000", "160000", "310000"], "HIGH_DENSITY")
+
+df_full_data.CD_CLI_DISTRICT_ADDRESS = df_full_data.CD_CLI_DISTRICT_ADDRESS.replace([
+    "20000", "40000", "50000", "70000", "80000", "90000", "120000", "170000", "180000", "320000", "410000", "420000"
+    , "430000", "440000", "450000", "460000", "470000", "480000", "490000"], "LOW_DENSITY")
+
+# split the data into numerical and categorical variables
+df_cat = df_full_data.select_dtypes(include="object").copy()
+df_num = df_full_data.select_dtypes(exclude="object").copy()
+
+
+
+df_full_data = pd.get_dummies(df_full_data, columns=['CD_GENDER', 'CD_CIVIL_STATUS', 'CD_NACIONALITY', 'CD_SCOLARITY',
+                                                     'CD_CLI_COUNTRY_ADDRESS'
+    , 'CD_CLI_BUSINESS_SEGMENT_M', 'CD_CLI_CHANNEL_PREFERENCE_M', 'CD_PROF_SITUATION'
+    , 'CD_CLI_DISTRICT_ADDRESS'],
+                              prefix=['CD_GENDER', 'CD_CIVIL_STATUS', 'CD_NACIONALITY', 'CD_SCOLARITY',
+                                      'CD_CLI_COUNTRY_ADDRESS',
+                                       'CD_CLI_BUSINESS_SEGMENT_M', 'CD_CLI_CHANNEL_PREFERENCE_M'
+                                  , 'CD_PROF_SITUATION', 'CD_CLI_DISTRICT_ADDRESS'])
+
+print("EXPORTING DATA...")
+df_full_data.to_csv(r'DATASET_prepared.csv', index=False)
+print("DATA EXPORTED IN THE FILE DATASET_prepared.csv")
 
 ######
 ###### ML AND STUFF (PROTOTYPE)
 ######
 
-def encode_onehot(series: pd.Series, drop_last: bool = True
-                  ) -> Union[pd.Series, pd.DataFrame]:
-    values = series.unique()
-    if drop_last:
-        values = values[:-1]
-    return pd.concat(((series == val).rename(val)
-                      for val in values
-                      ),
-                     axis=1
-                     ).squeeze()
-
-
-print("\n ENCODING GENDER")
-df_num['IS_FEMALE'] = encode_onehot(df_full_data['CD_GENDER'])
-
-print("\n NEW DATA")
-print(df_num)
-pd.set_option("display.max_rows", None)
-print(df_num.dtypes)
-
-df_num = df_num.dropna()
-
-X = df_num.drop('IS_TARGET', axis=1)
-y = df_num.IS_TARGET
-
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=1)
-
-clf = DecisionTreeClassifier(max_depth=5)
-
-clf.fit(X_train, y_train)
-
-y_pred = clf.predict(X_test)
-
-print("Accuracy:", metrics.accuracy_score(y_test, y_pred))
-
-dot_data = StringIO()
-export_graphviz(clf, out_file=dot_data,
-                filled=True, rounded=True,
-                special_characters=True, feature_names=X.columns, class_names=['0', '1'])
-graph = pydotplus.graph_from_dot_data(dot_data.getvalue())
-graph.write_png('MILLENIUM.png')
-Image(graph.create_png())
-
-
+# df_num = df_num.dropna()
+# X = df_num.drop('IS_TARGET', axis=1)
+# y = df_num.IS_TARGET
+#
+# X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=1)
+#
+# clf = DecisionTreeClassifier(max_depth=5)
+#
+# clf.fit(X_train, y_train)
+#
+# y_pred = clf.predict(X_test)
+#
+# print("Accuracy:", metrics.accuracy_score(y_test, y_pred))
+#
+# dot_data = StringIO()
+# export_graphviz(clf, out_file=dot_data,
+#                 filled=True, rounded=True,
+#                 special_characters=True, feature_names=X.columns, class_names=['0', '1'])
+# graph = pydotplus.graph_from_dot_data(dot_data.getvalue())
+# graph.write_png('MILLENIUM.png')
+# Image(graph.create_png())
