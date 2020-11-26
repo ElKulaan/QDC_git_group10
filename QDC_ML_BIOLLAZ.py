@@ -19,6 +19,7 @@ df_data = df_data.drop(columns=["FL_CLI_USES_BANK_APP_M", "FL_CLI_USES_BANK_WEB_
 
 df_sub_1 = df_data.filter(regex='^CD_GENDER|^QT_AGE|CD_SCOLARITY|CD_CLI_DISTRICT_ADDRESS|IS_TARGET', axis=1)
 
+
 pd.set_option("display.max_columns", None)
 #print(df_sub.head())
 
