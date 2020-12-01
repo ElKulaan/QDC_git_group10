@@ -194,9 +194,21 @@ df_full_data = pd.get_dummies(df_full_data, columns=['CD_GENDER', 'CD_CIVIL_STAT
                                        'CD_CLI_BUSINESS_SEGMENT_M', 'CD_CLI_CHANNEL_PREFERENCE_M'
                                   , 'CD_PROF_SITUATION', 'CD_CLI_DISTRICT_ADDRESS'])
 
+
+corr_matrix = df_full_data.corr().abs()
+
+upper = corr_matrix.where(np.triu(np.ones(corr_matrix.shape), k=1).astype(np.bool))
+
+# Find index of feature columns with correlation greater than 0.90
+to_drop = [column for column in upper.columns if any(upper[column] > 0.90)]
+print("high correlation")
+print(to_drop)
+df_full_data.drop(df_full_data[to_drop], axis=1)
+
 print("EXPORTING DATA...")
 df_full_data.to_csv(r'DATASET_prepared.csv', index=False)
 print("DATA EXPORTED IN THE FILE DATASET_prepared.csv")
+
 
 ######
 ###### ML AND STUFF (PROTOTYPE)

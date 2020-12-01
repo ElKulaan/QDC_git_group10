@@ -27,8 +27,8 @@ pd.set_option("display.max_columns", None)
 ###### ML AND STUFF (PROTOTYPE)
 ######
 
-X = df_sub.drop('IS_TARGET', axis=1)
-y = df_sub.IS_TARGET
+X = df_sub_1.drop('IS_TARGET', axis=1)
+y = df_sub_1.IS_TARGET
 
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=1)
 
