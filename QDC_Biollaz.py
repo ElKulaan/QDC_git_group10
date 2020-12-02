@@ -24,7 +24,6 @@ df_full_target = pd.read_csv('D:/QDC/QTEM_TARGET_csv.csv', index_col=0, header=0
 ## ADD A COLUMN (BOOLEAN encoded as an INTEGER) TO THE MAIN DATASET, CRITERIA --> IS THIS CLIENT A TARGET ?
 df_full_data['IS_TARGET'] = np.where(df_full_data.index.isin(df_full_target.index), 1, 0)
 
-
 def get_frequencies(data: pd.DataFrame, n_categories: int = None,
                     bins: int = None, dropna: bool = False
                     ):
@@ -95,7 +94,7 @@ def summarize_na(df: pd.DataFrame) -> pd.DataFrame:
 
 
 # print(summarize_na(df_full_data))
-summary_data(df_full_target)
+summary_data(df_full_data)
 
 # remove the data with more "NAN" than the threshold defined in function "summarize_na"
 df_full_data = df_full_data.drop(summarize_na(df_full_data).index, axis=1)
@@ -183,17 +182,14 @@ df_full_data.CD_CLI_DISTRICT_ADDRESS = df_full_data.CD_CLI_DISTRICT_ADDRESS.repl
 df_cat = df_full_data.select_dtypes(include="object").copy()
 df_num = df_full_data.select_dtypes(exclude="object").copy()
 
-
-
 df_full_data = pd.get_dummies(df_full_data, columns=['CD_GENDER', 'CD_CIVIL_STATUS', 'CD_NACIONALITY', 'CD_SCOLARITY',
                                                      'CD_CLI_COUNTRY_ADDRESS'
     , 'CD_CLI_BUSINESS_SEGMENT_M', 'CD_CLI_CHANNEL_PREFERENCE_M', 'CD_PROF_SITUATION'
     , 'CD_CLI_DISTRICT_ADDRESS'],
                               prefix=['CD_GENDER', 'CD_CIVIL_STATUS', 'CD_NACIONALITY', 'CD_SCOLARITY',
                                       'CD_CLI_COUNTRY_ADDRESS',
-                                       'CD_CLI_BUSINESS_SEGMENT_M', 'CD_CLI_CHANNEL_PREFERENCE_M'
+                                      'CD_CLI_BUSINESS_SEGMENT_M', 'CD_CLI_CHANNEL_PREFERENCE_M'
                                   , 'CD_PROF_SITUATION', 'CD_CLI_DISTRICT_ADDRESS'])
-
 
 corr_matrix = df_full_data.corr().abs()
 
@@ -208,7 +204,6 @@ df_full_data.drop(df_full_data[to_drop], axis=1)
 print("EXPORTING DATA...")
 df_full_data.to_csv(r'DATASET_prepared.csv', index=False)
 print("DATA EXPORTED IN THE FILE DATASET_prepared.csv")
-
 
 ######
 ###### ML AND STUFF (PROTOTYPE)
